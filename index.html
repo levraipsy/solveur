@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Solveur</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Solveur">
+<meta name="theme-color" content="#0d0d12">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-512.png">
+<style>
+:root{
+  --bg:#0d0d12; --card:#17171f; --line:#2a2a36; --txt:#eceaf0;
+  --dim:#8d8a99; --acc:#4fd1c5; --ok:#2f6f63;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+html,body{margin:0; background:var(--bg); color:var(--txt);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-size:16px; overscroll-behavior-y:contain}
+body{padding:calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 30px)}
+header{display:flex; align-items:center; justify-content:space-between; margin:0 2px 14px}
+h1{font-size:20px; margin:0; letter-spacing:-.4px}
+h2{font-size:13px; margin:0 0 10px; color:var(--dim); text-transform:uppercase; letter-spacing:1.1px; font-weight:600}
+.card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px; margin-bottom:12px}
+.hidden{display:none !important}
+.btn{appearance:none; border:1px solid var(--line); background:#22222c; color:var(--txt);
+  border-radius:12px; padding:12px 14px; font-size:15px; font-weight:600; cursor:pointer; touch-action:manipulation}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--acc); color:#062521; border-color:var(--acc); font-size:17px; padding:16px}
+.wide{display:block; width:100%; text-align:center}
+.mini{font-size:13px; padding:8px 11px; font-weight:500}
+#letters{width:100%; background:#0f0f16; border:1px solid var(--line); color:var(--txt);
+  border-radius:12px; padding:14px; font-size:24px; letter-spacing:8px; text-align:center;
+  text-transform:uppercase; font-weight:700; outline:none}
+#letters:focus{border-color:var(--acc)}
+#chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; min-height:0}
+.chip{width:46px; height:46px; border-radius:11px; border:1px solid var(--line);
+  background:#242430; color:var(--txt); font-size:19px; font-weight:700; cursor:pointer}
+.chip:active{background:#3a3a4c}
+#lens{display:flex; gap:8px; margin-bottom:10px}
+#lens .btn{flex:1; font-size:16px; padding:12px 0}
+#slots{display:flex; flex-wrap:wrap; gap:8px}
+.slot{display:flex; align-items:center; gap:8px; background:#242430; border:1px solid var(--line);
+  border-radius:10px; padding:7px 9px; font-size:14px}
+.slot b{font-size:15px}
+.slot span{color:var(--dim); cursor:pointer; font-size:16px; padding:0 2px}
+#preview{width:100%; border-radius:12px; margin-top:10px; display:block}
+.count{color:var(--acc); font-weight:700}
+.words{display:flex; flex-wrap:wrap; gap:7px}
+.word{background:#242430; border:1px solid var(--line); color:var(--txt); border-radius:9px;
+  padding:9px 12px; font-size:16px; font-weight:700; letter-spacing:.5px; cursor:pointer}
+.word.done{background:var(--ok); border-color:var(--ok)}
+.muted{color:var(--dim); font-size:14px; margin:0}
+#status{font-size:13px; color:var(--dim); margin-top:8px; min-height:16px}
+#toast{position:fixed; left:50%; bottom:calc(env(safe-area-inset-bottom) + 24px);
+  transform:translateX(-50%) translateY(20px); background:#2b2b3a; border:1px solid var(--line);
+  padding:11px 18px; border-radius:12px; font-size:14px; opacity:0; transition:.2s; pointer-events:none; z-index:9}
+#toast.on{opacity:1; transform:translateX(-50%) translateY(0)}
+a{color:var(--acc)}
+details summary{cursor:pointer; color:var(--dim); font-size:14px; margin-top:10px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Solveur</h1>
+  <button class="btn mini" id="btnDict">Dictionnaire</button>
+</header>
+
+<section class="card hidden" id="setup">
+  <h2>Importer un dictionnaire</h2>
+  <p class="muted">Une seule fois. Choisis le fichier de mots téléchargé sur ton ordinateur ou ton téléphone.</p>
+  <input type="file" id="fileDict" accept=".txt,.tsv,text/plain" class="hidden">
+  <button class="btn wide" id="btnPick" style="margin-top:10px">Choisir le fichier de mots</button>
+  <div id="status"></div>
+</section>
+
+<section class="card">
+  <h2>1. Capture d'écran</h2>
+  <input type="file" id="shot" accept="image/*" class="hidden">
+  <button class="btn wide" id="btnShot">Ajouter la capture</button>
+  <img id="preview" class="hidden" alt="">
+</section>
+
+<section class="card">
+  <h2>2. Lettres du cercle</h2>
+  <input id="letters" inputmode="text" autocapitalize="characters" autocomplete="off"
+         spellcheck="false" maxlength="7" placeholder="Tape les lettres">
+  <div id="chips"></div>
+</section>
+
+<section class="card">
+  <h2>3. Longueur des cases vides</h2>
+  <div id="lens"></div>
+  <div id="slots"></div>
+  <p class="muted" id="slotHelp">Tape une longueur par mot à trouver.</p>
+</section>
+
+<button class="btn primary wide" id="solve">Résoudre</button>
+
+<section id="out" class="hidden" style="margin-top:14px"></section>
+
+<div id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const norm = s => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .replace(/[^A-Za-z]/g, '').toUpperCase();
+
+const K = { dict: 'sv.dict', letters: 'sv.letters', slots: 'sv.slots' };
+let INDEX = null;
+let slots = [];
+
+/* ---------- dictionnaire ---------- */
+function buildIndex() {
+  INDEX = new Map();
+  const raw = localStorage.getItem(K.dict);
+  if (!raw) return;
+  for (const w of raw.split('\n')) {
+    if (w.length < 3 || w.length > 7) continue;
+    const key = w.split('').sort().join('');
+    let a = INDEX.get(key);
+    if (!a) INDEX.set(key, a = []);
+    a.push(w);
+  }
+}
+
+async function importDict(file) {
+  $('status').textContent = 'Lecture du fichier…';
+  const text = await file.text();
+  const set = new Set();
+  for (const line of text.split(/\r?\n/)) {
+    const w = norm(line.split('\t')[0].trim());
+    if (w.length >= 3 && w.length <= 7) set.add(w);
+    if (set.size > 400000) break;
+  }
+  if (set.size < 500) {
+    $('status').textContent = 'Fichier trop petit ou illisible (' + set.size + ' mots).';
+    return;
+  }
+  const list = [...set].sort();
+  $('status').textContent = 'Enregistrement de ' + list.length + ' mots…';
+  try {
+    localStorage.setItem(K.dict, list.join('\n'));
+  } catch (e) {
+    localStorage.setItem(K.dict, list.slice(0, 200000).join('\n'));
+  }
+  buildIndex();
+  $('status').textContent = INDEX.size + ' mots chargés. C\'est prêt.';
+  setTimeout(() => { $('setup').classList.add('hidden'); }, 1200);
+}
+
+/* ---------- ui ---------- */
+function toast(m) {
+  const t = $('toast'); t.textContent = m; t.classList.add('on');
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('on'), 1700);
+}
+
+function renderChips() {
+  const v = norm($('letters').value);
+  $('letters').value = v;
+  localStorage.setItem(K.letters, v);
+  $('chips').innerHTML = '';
+  [...v].forEach((c, i) => {
+    const b = document.createElement('button');
+    b.className = 'chip'; b.textContent = c;
+    b.onclick = () => {
+      const a = [...$('letters').value]; a.splice(i, 1);
+      $('letters').value = a.join(''); renderChips();
+    };
+    $('chips').append(b);
+  });
+}
+
+function renderSlots() {
+  localStorage.setItem(K.slots, JSON.stringify(slots));
+  $('slots').innerHTML = '';
+  $('slotHelp').style.display = slots.length ? 'none' : 'block';
+  slots.forEach((len, i) => {
+    const d = document.createElement('div');
+    d.className = 'slot';
+    d.innerHTML = '<b>' + len + ' lettres</b><span>×</span>';
+    d.querySelector('span').onclick = () => { slots.splice(i, 1); renderSlots(); };
+    $('slots').append(d);
+  });
+}
+
+/* ---------- solveur ---------- */
+function* combos(a, k, start = 0, cur = '') {
+  if (cur.length === k) { yield cur; return; }
+  for (let i = start; i < a.length; i++) yield* combos(a, k, i + 1, cur + a[i]);
+}
+
+function solve() {
+  if (!INDEX) { toast('Importe d\'abord un dictionnaire'); $('setup').classList.remove('hidden'); return; }
+  const letters = norm($('letters').value);
+  if (letters.length < 3) { toast('Au moins 3 lettres'); return; }
+  if (!slots.length) { toast('Ajoute au moins une longueur'); return; }
+
+  const maxL = Math.min(letters.length, 7);
+  const byLen = new Map();
+  for (let len = 3; len <= maxL; len++) {
+    const set = new Set();
+    const seen = new Set();
+    for (const c of combos(letters, len)) {
+      const key = c.split('').sort().join('');
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const ws = INDEX.get(key);
+      if (ws) for (const w of ws) set.add(w);
+    }
+    if (set.size) byLen.set(len, set);
+  }
+  renderResults(byLen);
+}
+
+function copy(w) {
+  navigator.clipboard?.writeText(w).then(() => toast('« ' + w + ' » copié'), () => {});
+}
+
+function renderResults(byLen) {
+  const out = $('out');
+  out.innerHTML = '';
+  out.classList.remove('hidden');
+  let total = 0;
+  slots.forEach(len => {
+    const set = byLen.get(len) || new Set();
+    total += set.size;
+    const card = document.createElement('section');
+    card.className = 'card';
+    card.innerHTML = '<h2>' + len + ' lettres — <span class="count">' + set.size + '</span></h2>';
+    const wrap = document.createElement('div');
+    wrap.className = 'words';
+    if (!set.size) wrap.innerHTML = '<p class="muted">Aucun mot trouvé.</p>';
+    [...set].sort().forEach(w => {
+      const b = document.createElement('button');
+      b.className = 'word'; b.textContent = w;
+      b.onclick = () => { copy(w); b.classList.add('done'); };
+      wrap.append(b);
+    });
+    card.append(wrap);
+    out.append(card);
+  });
+
+  const bonus = [];
+  for (const [len, set] of byLen) if (!slots.includes(len)) bonus.push(...set);
+  if (bonus.length) {
+    const card = document.createElement('section');
+    card.className = 'card';
+    card.innerHTML = '<h2>Mots bonus — <span class="count">' + bonus.length + '</span></h2>';
+    const wrap = document.createElement('div');
+    wrap.className = 'words';
+    bonus.sort((a, b) => a.length - b.length || a.localeCompare(b)).forEach(w => {
+      const b = document.createElement('button');
+      b.className = 'word'; b.textContent = w;
+      b.onclick = () => { copy(w); b.classList.add('done'); };
+      wrap.append(b);
+    });
+    card.append(wrap);
+    out.append(card);
+  }
+  toast(total + ' mot(s) pour la grille');
+  window.scrollTo({ top: out.offsetTop - 20, behavior: 'smooth' });
+}
+
+/* ---------- branchements ---------- */
+[3, 4, 5, 6, 7].forEach(n => {
+  const b = document.createElement('button');
+  b.className = 'btn'; b.textContent = n;
+  b.onclick = () => { if (slots.length < 12) { slots.push(n); renderSlots(); } };
+  $('lens').append(b);
+});
+
+$('btnPick').onclick = () => $('fileDict').click();
+$('fileDict').onchange = e => { if (e.target.files[0]) importDict(e.target.files[0]); };
+$('btnShot').onclick = () => $('shot').click();
+$('shot').onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  $('preview').src = URL.createObjectURL(f);
+  $('preview').classList.remove('hidden');
+};
+$('letters').oninput = renderChips;
+$('solve').onclick = solve;
+$('btnDict').onclick = () => $('setup').classList.toggle('hidden');
+
+buildIndex();
+$('letters').value = localStorage.getItem(K.letters) || '';
+slots = JSON.parse(localStorage.getItem(K.slots) || '[]');
+renderChips(); renderSlots();
+if (!INDEX) $('setup').classList.remove('hidden');
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+</script>
+</body>
+</html>
