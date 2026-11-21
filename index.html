@@ -30,89 +30,125 @@ h2{font-size:13px; margin:0 0 10px; color:var(--dim); text-transform:uppercase; 
   border-radius:12px; padding:12px 14px; font-size:15px; font-weight:600; cursor:pointer; touch-action:manipulation}
 .btn:active{transform:scale(.97)}
 .btn.primary{background:var(--acc); color:#062521; border-color:var(--acc); font-size:17px; padding:16px}
+.btn.ghost{background:transparent; color:var(--dim)}
 .wide{display:block; width:100%; text-align:center}
 .mini{font-size:13px; padding:8px 11px; font-weight:500}
-#letters{width:100%; background:#0f0f16; border:1px solid var(--line); color:var(--txt);
-  border-radius:12px; padding:14px; font-size:24px; letter-spacing:8px; text-align:center;
-  text-transform:uppercase; font-weight:700; outline:none}
-#letters:focus{border-color:var(--acc)}
-#chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; min-height:0}
+.row{display:flex; gap:8px; margin-top:10px}
+.row .btn{flex:1}
+input[type=text],input[type=password]{width:100%; background:#0f0f16; border:1px solid var(--line);
+  color:var(--txt); border-radius:12px; padding:12px; font-size:15px; outline:none}
+#letters{font-size:24px; letter-spacing:8px; text-align:center; text-transform:uppercase; font-weight:700}
+#chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px}
 .chip{width:46px; height:46px; border-radius:11px; border:1px solid var(--line);
   background:#242430; color:var(--txt); font-size:19px; font-weight:700; cursor:pointer}
-.chip:active{background:#3a3a4c}
 #lens{display:flex; gap:8px; margin-bottom:10px}
 #lens .btn{flex:1; font-size:16px; padding:12px 0}
 #slots{display:flex; flex-wrap:wrap; gap:8px}
 .slot{display:flex; align-items:center; gap:8px; background:#242430; border:1px solid var(--line);
   border-radius:10px; padding:7px 9px; font-size:14px}
-.slot b{font-size:15px}
 .slot span{color:var(--dim); cursor:pointer; font-size:16px; padding:0 2px}
-#preview{width:100%; border-radius:12px; margin-top:10px; display:block}
+#preview{width:100%; border-radius:12px; margin-top:10px; display:block; cursor:zoom-in}
 .count{color:var(--acc); font-weight:700}
 .words{display:flex; flex-wrap:wrap; gap:7px}
 .word{background:#242430; border:1px solid var(--line); color:var(--txt); border-radius:9px;
   padding:9px 12px; font-size:16px; font-weight:700; letter-spacing:.5px; cursor:pointer}
 .word.done{background:var(--ok); border-color:var(--ok)}
 .muted{color:var(--dim); font-size:14px; margin:0}
-#status{font-size:13px; color:var(--dim); margin-top:8px; min-height:16px}
+#read{font-size:13px; color:var(--dim); margin-top:8px; min-height:16px}
+#banner{background:#1d2a29; border:1px solid #2f4a47; color:#bfeee6; border-radius:12px;
+  padding:11px 13px; font-size:14px; margin-bottom:10px}
+#testOut{font-size:13px; margin-top:8px; color:var(--dim)}
 #toast{position:fixed; left:50%; bottom:calc(env(safe-area-inset-bottom) + 24px);
   transform:translateX(-50%) translateY(20px); background:#2b2b3a; border:1px solid var(--line);
-  padding:11px 18px; border-radius:12px; font-size:14px; opacity:0; transition:.2s; pointer-events:none; z-index:9}
+  padding:11px 18px; border-radius:12px; font-size:14px; opacity:0; transition:.2s; pointer-events:none; z-index:99}
 #toast.on{opacity:1; transform:translateX(-50%) translateY(0)}
+#viewer{position:fixed; inset:0; background:#000; z-index:50; overflow:auto; display:none}
+#viewer.on{display:block}
+#viewer img{width:220%; max-width:none; display:block; margin:60px 0}
+#viewer .close{position:fixed; top:calc(env(safe-area-inset-top) + 12px); right:12px; z-index:51;
+  width:44px; height:44px; border-radius:22px; border:none; background:#ffffff22; color:#fff; font-size:22px}
 a{color:var(--acc)}
-details summary{cursor:pointer; color:var(--dim); font-size:14px; margin-top:10px}
 </style>
 </head>
 <body>
 
 <header>
   <h1>Solveur</h1>
-  <button class="btn mini" id="btnDict">Dictionnaire</button>
+  <button class="btn mini" id="btnSettings">Réglages</button>
 </header>
 
-<section class="card hidden" id="setup">
-  <h2>Importer un dictionnaire</h2>
-  <p class="muted">Une seule fois. Choisis le fichier de mots téléchargé sur ton ordinateur ou ton téléphone.</p>
-  <input type="file" id="fileDict" accept=".txt,.tsv,text/plain" class="hidden">
-  <button class="btn wide" id="btnPick" style="margin-top:10px">Choisir le fichier de mots</button>
-  <div id="status"></div>
+<section class="card hidden" id="settings">
+  <h2>Réglages</h2>
+  <p class="muted">Clé API Google AI Studio — <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">en créer une</a>. Elle reste sur ton téléphone.</p>
+  <input type="password" id="key" placeholder="AIza… ou AQ…" style="margin-top:8px">
+  <input type="text" id="model" placeholder="modèle (laisser vide)" style="margin-top:8px">
+  <div class="row">
+    <button class="btn" id="testKey">Tester la clé</button>
+    <button class="btn ghost" id="saveSettings">Enregistrer</button>
+  </div>
+  <div class="row">
+    <button class="btn ghost" id="closeSettings">Fermer</button>
+  </div>
+  <div id="testOut"></div>
 </section>
 
 <section class="card">
-  <h2>1. Capture d'écran</h2>
+  <h2>Capture du niveau</h2>
   <input type="file" id="shot" accept="image/*" class="hidden">
-  <button class="btn wide" id="btnShot">Ajouter la capture</button>
-  <img id="preview" class="hidden" alt="">
+  <button class="btn primary wide" id="btnShot">Choisir une capture</button>
+  <img id="preview" class="hidden" alt="Capture du niveau">
+  <div class="row hidden" id="shotActions">
+    <button class="btn" id="btnAgain">Relancer l'analyse</button>
+    <button class="btn ghost" id="btnDropShot">Retirer</button>
+  </div>
+  <div id="read"></div>
 </section>
 
 <section class="card">
-  <h2>2. Lettres du cercle</h2>
-  <input id="letters" inputmode="text" autocapitalize="characters" autocomplete="off"
-         spellcheck="false" maxlength="7" placeholder="Tape les lettres">
+  <h2>Lettres détectées</h2>
+  <input id="letters" type="text" inputmode="text" autocapitalize="characters"
+         autocomplete="off" spellcheck="false" maxlength="7" placeholder="—">
   <div id="chips"></div>
 </section>
 
 <section class="card">
-  <h2>3. Longueur des cases vides</h2>
+  <h2>Cases à remplir</h2>
   <div id="lens"></div>
   <div id="slots"></div>
-  <p class="muted" id="slotHelp">Tape une longueur par mot à trouver.</p>
+  <p class="muted" id="slotHelp">Détection automatique. Corrige en tapant une longueur.</p>
 </section>
 
-<button class="btn primary wide" id="solve">Résoudre</button>
+<section id="out"></section>
 
-<section id="out" class="hidden" style="margin-top:14px"></section>
-
+<div id="viewer"><button class="close" id="closeViewer">×</button><img id="viewerImg" alt=""></div>
 <div id="toast"></div>
 
 <script>
 const $ = id => document.getElementById(id);
 const norm = s => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
   .replace(/[^A-Za-z]/g, '').toUpperCase();
+const API = 'https://generativelanguage.googleapis.com/v1beta/models/';
 
-const K = { dict: 'sv.dict', letters: 'sv.letters', slots: 'sv.slots' };
+const K = { dict: 'sv.dict', letters: 'sv.letters', slots: 'sv.slots', key: 'sv.key', model: 'sv.model' };
+const MODELS = ['gemini-3.8-flash', 'gemini-3.6-flash', 'gemini-2.5-flash'];
 let INDEX = null;
 let slots = [];
+
+const PROMPT = `Capture d'écran du jeu Wordscapes. Réponds uniquement en JSON.
+
+"letters" : les lettres affichées sur les pastilles du cercle en bas de l'écran, une par entrée, dans l'ordre où elles apparaissent de gauche à droite. Ne devine rien, ne complète pas.
+"slots" : pour chaque mot de la grille encore incomplet, son nombre total de cases, du haut vers le bas puis de gauche à droite. Une entrée par mot. Une ligne déjà entièrement remplie est exclue. Une ligne partiellement remplie est incluse avec sa longueur totale.
+"note" : une phrase courte si l'image est ambiguë, sinon vide.`;
+
+const SCHEMA = {
+  type: 'OBJECT',
+  properties: {
+    letters: { type: 'ARRAY', items: { type: 'STRING' } },
+    slots: { type: 'ARRAY', items: { type: 'INTEGER' } },
+    note: { type: 'STRING' }
+  },
+  required: ['letters', 'slots']
+};
 
 /* ---------- dictionnaire ---------- */
 function buildIndex() {
@@ -128,35 +164,10 @@ function buildIndex() {
   }
 }
 
-async function importDict(file) {
-  $('status').textContent = 'Lecture du fichier…';
-  const text = await file.text();
-  const set = new Set();
-  for (const line of text.split(/\r?\n/)) {
-    const w = norm(line.split('\t')[0].trim());
-    if (w.length >= 3 && w.length <= 7) set.add(w);
-    if (set.size > 400000) break;
-  }
-  if (set.size < 500) {
-    $('status').textContent = 'Fichier trop petit ou illisible (' + set.size + ' mots).';
-    return;
-  }
-  const list = [...set].sort();
-  $('status').textContent = 'Enregistrement de ' + list.length + ' mots…';
-  try {
-    localStorage.setItem(K.dict, list.join('\n'));
-  } catch (e) {
-    localStorage.setItem(K.dict, list.slice(0, 200000).join('\n'));
-  }
-  buildIndex();
-  $('status').textContent = INDEX.size + ' mots chargés. C\'est prêt.';
-  setTimeout(() => { $('setup').classList.add('hidden'); }, 1200);
-}
-
 /* ---------- ui ---------- */
 function toast(m) {
   const t = $('toast'); t.textContent = m; t.classList.add('on');
-  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('on'), 1700);
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('on'), 2200);
 }
 
 function renderChips() {
@@ -182,10 +193,153 @@ function renderSlots() {
   slots.forEach((len, i) => {
     const d = document.createElement('div');
     d.className = 'slot';
-    d.innerHTML = '<b>' + len + ' lettres</b><span>×</span>';
+    d.innerHTML = '<b>' + len + '</b> cases <span>×</span>';
     d.querySelector('span').onclick = () => { slots.splice(i, 1); renderSlots(); };
     $('slots').append(d);
   });
+}
+
+/* ---------- capture ---------- */
+$('btnShot').onclick = () => $('shot').click();
+$('shot').onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  $('preview').src = URL.createObjectURL(f);
+  $('preview').classList.remove('hidden');
+  $('shotActions').classList.remove('hidden');
+  $('letters').value = ''; slots = []; renderChips(); renderSlots();
+  $('out').innerHTML = '';
+  analyse();
+};
+$('btnAgain').onclick = analyse;
+$('btnDropShot').onclick = () => {
+  $('preview').removeAttribute('src');
+  $('preview').classList.add('hidden');
+  $('shotActions').classList.add('hidden');
+  $('read').textContent = '';
+};
+$('preview').onclick = () => {
+  $('viewerImg').src = $('preview').src;
+  $('viewer').classList.add('on');
+};
+$('closeViewer').onclick = () => $('viewer').classList.remove('on');
+
+/* ---------- réglages ---------- */
+$('btnSettings').onclick = () => {
+  $('key').value = localStorage.getItem(K.key) || '';
+  $('model').value = localStorage.getItem(K.model) || '';
+  $('testOut').textContent = '';
+  $('settings').classList.remove('hidden');
+};
+$('closeSettings').onclick = () => $('settings').classList.add('hidden');
+$('saveSettings').onclick = () => {
+  const k = $('key').value.trim(), m = $('model').value.trim();
+  if (k) localStorage.setItem(K.key, k); else localStorage.removeItem(K.key);
+  if (m) localStorage.setItem(K.model, m); else localStorage.removeItem(K.model);
+  $('settings').classList.add('hidden');
+  toast('Réglages enregistrés');
+};
+$('testKey').onclick = async () => {
+  const k = $('key').value.trim() || localStorage.getItem(K.key);
+  if (!k) { $('testOut').textContent = 'Aucune clé saisie.'; return; }
+  $('testOut').textContent = 'Test en cours…';
+  try {
+    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?key=' + encodeURIComponent(k));
+    $('testOut').textContent = r.ok ? 'Clé valide.' : 'Clé refusée (code ' + r.status + ').';
+  } catch (e) {
+    $('testOut').textContent = 'Réseau : ' + (e.message || e);
+  }
+};
+
+/* ---------- analyse par vision ---------- */
+async function shrink(src) {
+  const im = new Image();
+  im.src = src;
+  await im.decode();
+  const w = Math.min(1100, im.naturalWidth);
+  const h = Math.round(im.naturalHeight * (w / im.naturalWidth));
+  const cv = document.createElement('canvas');
+  cv.width = w; cv.height = h;
+  cv.getContext('2d').drawImage(im, 0, 0, w, h);
+  return cv.toDataURL('image/jpeg', 0.85).split(',')[1];
+}
+
+async function ask(key, model, data, withThinking) {
+  const cfg = {
+    temperature: 0.1,
+    maxOutputTokens: 2048,
+    responseMimeType: 'application/json',
+    responseSchema: SCHEMA
+  };
+  if (withThinking) cfg.thinkingConfig = { thinkingBudget: 0 };
+
+  return fetch(API + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(key), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [
+        { text: PROMPT },
+        { inline_data: { mime_type: 'image/jpeg', data } }
+      ] }],
+      generationConfig: cfg
+    })
+  });
+}
+
+async function analyse() {
+  const key = localStorage.getItem(K.key);
+  if (!key) { toast('Ajoute ta clé API dans les réglages'); $('btnSettings').click(); return; }
+  const src = $('preview').getAttribute('src');
+  if (!src) { toast('Choisis une capture'); return; }
+  if (!INDEX) { toast('Dictionnaire manquant'); return; }
+
+  $('read').textContent = 'Analyse de la capture…';
+  $('btnAgain').disabled = true;
+
+  try {
+    const data = await shrink(src);
+    const forced = localStorage.getItem(K.model);
+    const list = forced ? [forced] : MODELS;
+
+    let res = null;
+    let lastErr = 'aucun modèle disponible';
+    for (const model of list) {
+      let r = await ask(key, model, data, true);
+      if (r.status === 400) r = await ask(key, model, data, false);
+      if (r.ok) { res = r; break; }
+      lastErr = 'code ' + r.status + ' — ' + (await r.text()).slice(0, 120);
+    }
+    if (!res) { $('read').textContent = 'Échec : ' + lastErr; return; }
+
+    const j = await res.json();
+    if (j.promptFeedback?.blockReason) {
+      $('read').textContent = 'Image refusée par le modèle.';
+      return;
+    }
+
+    const parts = j.candidates?.[0]?.content?.parts || [];
+    const txt = parts.filter(p => p.text && !p.thought).map(p => p.text).join('') || '{}';
+    const out = JSON.parse(txt);
+
+    const letters = [...new Set(norm((out.letters || []).join('')))].join('');
+    const found = (out.slots || []).map(Number).filter(n => n >= 3 && n <= 12);
+
+    if (letters.length < 3 || !found.length) {
+      $('read').textContent = 'Détection incomplète — corrige à la main.';
+      return;
+    }
+
+    $('letters').value = letters;
+    slots = found;
+    renderChips(); renderSlots();
+
+    $('read').textContent = 'Lettres ' + letters.split('').join(' ') +
+      ' · cases ' + found.join(' ') + (out.note ? ' · ' + out.note : '');
+    solve();
+  } catch (e) {
+    $('read').textContent = 'Analyse impossible : ' + (e.message || e);
+  } finally {
+    $('btnAgain').disabled = false;
+  }
 }
 
 /* ---------- solveur ---------- */
@@ -195,10 +349,8 @@ function* combos(a, k, start = 0, cur = '') {
 }
 
 function solve() {
-  if (!INDEX) { toast('Importe d\'abord un dictionnaire'); $('setup').classList.remove('hidden'); return; }
   const letters = norm($('letters').value);
-  if (letters.length < 3) { toast('Au moins 3 lettres'); return; }
-  if (!slots.length) { toast('Ajoute au moins une longueur'); return; }
+  if (!INDEX || letters.length < 3 || !slots.length) return;
 
   const maxL = Math.min(letters.length, 7);
   const byLen = new Map();
@@ -206,10 +358,10 @@ function solve() {
     const set = new Set();
     const seen = new Set();
     for (const c of combos(letters, len)) {
-      const key = c.split('').sort().join('');
-      if (seen.has(key)) continue;
-      seen.add(key);
-      const ws = INDEX.get(key);
+      const k = c.split('').sort().join('');
+      if (seen.has(k)) continue;
+      seen.add(k);
+      const ws = INDEX.get(k);
       if (ws) for (const w of ws) set.add(w);
     }
     if (set.size) byLen.set(len, set);
@@ -224,22 +376,27 @@ function copy(w) {
 function renderResults(byLen) {
   const out = $('out');
   out.innerHTML = '';
-  out.classList.remove('hidden');
   let total = 0;
+
+  const b = document.createElement('div');
+  b.id = 'banner';
+  b.textContent = 'Vérifie les lettres et les cases. Appuie sur un mot pour le copier.';
+  out.append(b);
+
   slots.forEach(len => {
     const set = byLen.get(len) || new Set();
     total += set.size;
     const card = document.createElement('section');
     card.className = 'card';
-    card.innerHTML = '<h2>' + len + ' lettres — <span class="count">' + set.size + '</span></h2>';
+    card.innerHTML = '<h2>' + len + ' cases — <span class="count">' + set.size + '</span></h2>';
     const wrap = document.createElement('div');
     wrap.className = 'words';
-    if (!set.size) wrap.innerHTML = '<p class="muted">Aucun mot trouvé.</p>';
+    if (!set.size) wrap.innerHTML = '<p class="muted">Aucun mot.</p>';
     [...set].sort().forEach(w => {
-      const b = document.createElement('button');
-      b.className = 'word'; b.textContent = w;
-      b.onclick = () => { copy(w); b.classList.add('done'); };
-      wrap.append(b);
+      const btn = document.createElement('button');
+      btn.className = 'word'; btn.textContent = w;
+      btn.onclick = () => { copy(w); btn.classList.add('done'); };
+      wrap.append(btn);
     });
     card.append(wrap);
     out.append(card);
@@ -253,44 +410,34 @@ function renderResults(byLen) {
     card.innerHTML = '<h2>Mots bonus — <span class="count">' + bonus.length + '</span></h2>';
     const wrap = document.createElement('div');
     wrap.className = 'words';
-    bonus.sort((a, b) => a.length - b.length || a.localeCompare(b)).forEach(w => {
-      const b = document.createElement('button');
-      b.className = 'word'; b.textContent = w;
-      b.onclick = () => { copy(w); b.classList.add('done'); };
-      wrap.append(b);
+    bonus.sort((a, c) => a.length - c.length || a.localeCompare(c)).forEach(w => {
+      const btn = document.createElement('button');
+      btn.className = 'word'; btn.textContent = w;
+      btn.onclick = () => { copy(w); btn.classList.add('done'); };
+      wrap.append(btn);
     });
     card.append(wrap);
     out.append(card);
   }
   toast(total + ' mot(s) pour la grille');
-  window.scrollTo({ top: out.offsetTop - 20, behavior: 'smooth' });
 }
 
 /* ---------- branchements ---------- */
 [3, 4, 5, 6, 7].forEach(n => {
   const b = document.createElement('button');
   b.className = 'btn'; b.textContent = n;
-  b.onclick = () => { if (slots.length < 12) { slots.push(n); renderSlots(); } };
+  b.onclick = () => { if (slots.length < 12) { slots.push(n); renderSlots(); solve(); } };
   $('lens').append(b);
 });
 
-$('btnPick').onclick = () => $('fileDict').click();
-$('fileDict').onchange = e => { if (e.target.files[0]) importDict(e.target.files[0]); };
-$('btnShot').onclick = () => $('shot').click();
-$('shot').onchange = e => {
-  const f = e.target.files[0]; if (!f) return;
-  $('preview').src = URL.createObjectURL(f);
-  $('preview').classList.remove('hidden');
-};
 $('letters').oninput = renderChips;
-$('solve').onclick = solve;
-$('btnDict').onclick = () => $('setup').classList.toggle('hidden');
+$('letters').onchange = solve;
 
 buildIndex();
 $('letters').value = localStorage.getItem(K.letters) || '';
 slots = JSON.parse(localStorage.getItem(K.slots) || '[]');
 renderChips(); renderSlots();
-if (!INDEX) $('setup').classList.remove('hidden');
+if (!localStorage.getItem(K.key)) $('settings').classList.remove('hidden');
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>
